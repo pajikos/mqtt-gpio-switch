@@ -1,5 +1,5 @@
 # Start with a Python base image that is compatible with Raspberry Pi's ARM architecture
-FROM python:3.10
+FROM python:3.12
 
 # Install necessary packages for GPIO access and other dependencies
 RUN apt-get update && apt-get install -y \
