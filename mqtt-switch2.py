@@ -8,6 +8,10 @@ from datetime import datetime, timedelta
 import RPi.GPIO as GPIO
 import paho.mqtt.client as mqtt
 from timeloop import Timeloop
+from flask import Flask, jsonify
+from threading import Thread
+
+app = Flask(__name__)
 
 
 # Configuration constants updated to load from environment variables
@@ -21,7 +25,9 @@ AUTOMATIC_SHUTDOWN_DELAY = int(os.getenv('AUTOMATIC_SHUTDOWN_DELAY', 15))
 GPIO_ID = int(os.getenv('GPIO_ID', 21))
 
 # Setup logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger(__name__)
 
 # GPIO setup
@@ -110,6 +116,16 @@ def scheduled_turn_off():
 def send_availability_and_state():
     mqtt_controller.publish_availability('online')
     mqtt_controller.publish_state()
+    
+@app.route('/health', methods=['GET'])
+def health_check():
+    if mqtt_controller.mqttc.is_connected() and tl.is_running():
+        return jsonify({'status': 'healthy'}), 200
+    else:
+        return jsonify({'status': 'unhealthy'}), 503
+
+def run_flask_app():
+    app.run(host='0.0.0.0', port=5000)
 
 # Signal handler for graceful shutdown
 def signal_handler(sig, frame):
@@ -121,6 +137,9 @@ def signal_handler(sig, frame):
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+    
+    flask_thread = Thread(target=run_flask_app)
+    flask_thread.start()
 
     mqtt_controller = MQTTController()
     mqtt_controller.start()
