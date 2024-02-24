@@ -40,7 +40,7 @@ last_call = None
 
 class MQTTController:
     def __init__(self):
-        self.mqttc = mqtt.Client(callback_api_version=5.0)
+        self.mqttc = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
         self.mqttc.enable_logger(logger)
         self.setup_callbacks()
 
@@ -57,7 +57,7 @@ class MQTTController:
             logger.error("Could not connect to MQTT server: %s. Retrying in 60 seconds...", e)
             tl.job(interval=timedelta(seconds=30))(self.connect)
 
-    def on_connect(self, client, userdata, flags, rc):
+    def on_connect(self, client, userdata, flags, reason_code, properties):
         self.publish_availability('online')
         self.mqttc.subscribe(MQTT_TOPIC_SUB, 0)
         logger.info(f"Connected to MQTT broker at {MQTT_HOST}")
@@ -79,10 +79,10 @@ class MQTTController:
             logger.info("Turning off the device.")
         self.publish_state()
 
-    def on_subscribe(self, client, userdata, mid, granted_qos):
-        logger.info(f"Subscribed to {MQTT_TOPIC_SUB} with QoS {granted_qos}")
+    def on_subscribe(self, client, userdata, mid, reason_codes, properties):
+        logger.info(f"Subscribed to {MQTT_TOPIC_SUB}")
 
-    def disconnect_callback(self, client, userdata, rc):
+    def disconnect_callback(self, client, userdata, flags, reason_code, properties):
         self.publish_availability('offline')
 
     def publish_state(self):
