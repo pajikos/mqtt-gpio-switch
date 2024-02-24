@@ -40,7 +40,7 @@ last_call = None
 
 class MQTTController:
     def __init__(self):
-        self.mqttc = mqtt.Client()
+        self.mqttc = mqtt.Client(callback_api_version=5.0)
         self.mqttc.enable_logger(logger)
         self.setup_callbacks()
 
