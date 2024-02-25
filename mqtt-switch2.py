@@ -119,7 +119,7 @@ def send_availability_and_state():
     
 @app.route('/health', methods=['GET'])
 def health_check():
-    if mqtt_controller.mqttc.is_connected() and tl.is_running():
+    if mqtt_controller.mqttc.is_connected():
         return jsonify({'status': 'healthy'}), 200
     else:
         return jsonify({'status': 'unhealthy'}), 503
