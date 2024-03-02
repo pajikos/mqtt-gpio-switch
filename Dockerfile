@@ -5,6 +5,7 @@ FROM python:3.12
 RUN apt-get update && apt-get install -y \
     python3-dev \
     python3-rpi.gpio \
+    libgpiod2 libgpiod-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
@@ -14,7 +15,7 @@ WORKDIR /usr/src/app
 COPY mqtt-switch2.py .
 
 # Install required Python libraries
-RUN pip install --no-cache-dir paho-mqtt RPi.GPIO gpiozero pigpio timeloop Flask
+RUN pip install --no-cache-dir paho-mqtt RPi.GPIO gpiozero timeloop Flask
 
 # Environment variables can be defined in the Dockerfile, but it's better to pass them at runtime
 # for flexibility and security
