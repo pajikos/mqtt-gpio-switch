@@ -11,6 +11,22 @@ from timeloop import Timeloop
 from flask import Flask, jsonify
 from threading import Thread
 
+def gpio_factory(factory):
+    if factory == 'rpigpio':
+        from gpiozero.pins.rpigpio import RPiGPIOFactory
+        return RPiGPIOFactory()
+    elif factory == 'pigpio':
+        from gpiozero.pins.pigpio import PiGPIOFactory
+        return PiGPIOFactory()
+    elif factory == 'lgpio':
+        from gpiozero.pins.lgpio import LGPIOPinFactory
+        return LGPIOPinFactory()
+    elif factory == 'native':
+        from gpiozero.pins.native import NativePinFactory
+        return NativePinFactory()
+    else:
+        raise ValueError(f"Unknown GPIO factory: {factory}")
+
 app = Flask(__name__)
 
 
@@ -23,6 +39,7 @@ MQTT_TOPIC_SUB = os.getenv('MQTT_TOPIC_SUB', "home/kotel/set")
 MQTT_TOPIC_AVAILABILITY = os.getenv('MQTT_TOPIC_AVAILABILITY', "home/kotel/availability")
 AUTOMATIC_SHUTDOWN_DELAY = int(os.getenv('AUTOMATIC_SHUTDOWN_DELAY', 15))
 GPIO_ID = int(os.getenv('GPIO_ID', 21))
+GPIOZERO_PIN_FACTORY = os.getenv('GPIOZERO_PIN_FACTORY', 'pigpio') # rpigpio, pigpio, lgpio, native
 
 # Setup logging
 logging.basicConfig(level=logging.INFO,
@@ -31,7 +48,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 # GPIO setup
-switch = LED(GPIO_ID)
+switch = LED(GPIO_ID, pin_factory=gpio_factory(GPIOZERO_PIN_FACTORY))
 
 # Timeloop for scheduled tasks
 tl = Timeloop()
