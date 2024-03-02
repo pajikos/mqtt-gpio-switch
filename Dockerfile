@@ -15,7 +15,7 @@ WORKDIR /usr/src/app
 COPY mqtt-switch2.py .
 
 # Install required Python libraries
-RUN pip install --no-cache-dir paho-mqtt RPi.GPIO gpiozero timeloop Flask
+RUN pip install --no-cache-dir paho-mqtt RPi.GPIO gpiozero lgpio timeloop Flask
 
 # Environment variables can be defined in the Dockerfile, but it's better to pass them at runtime
 # for flexibility and security
