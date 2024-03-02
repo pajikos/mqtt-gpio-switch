@@ -5,7 +5,7 @@ import os
 import signal
 from datetime import datetime, timedelta
 
-import RPi.GPIO as GPIO
+from gpiozero import LED
 import paho.mqtt.client as mqtt
 from timeloop import Timeloop
 from flask import Flask, jsonify
@@ -31,8 +31,7 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger(__name__)
 
 # GPIO setup
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(GPIO_ID, GPIO.OUT)
+switch = LED(GPIO_ID)
 
 # Timeloop for scheduled tasks
 tl = Timeloop()
@@ -70,12 +69,12 @@ class MQTTController:
         self.handle_message(payload)
 
     def handle_message(self, payload):
-        state = GPIO.input(GPIO_ID)
+        state = switch.value
         if payload == 'ON' and state != 1:
-            GPIO.output(GPIO_ID, True)
+            switch.on()
             logger.info("Turning on the device.")
         elif payload == 'OFF' and state == 1:
-            GPIO.output(GPIO_ID, False)
+            switch.off()
             logger.info("Turning off the device.")
         self.publish_state()
 
@@ -86,7 +85,7 @@ class MQTTController:
         self.publish_availability('offline')
 
     def publish_state(self):
-        state = 'ON' if GPIO.input(GPIO_ID) == 1 else 'OFF'
+        state = 'ON' if switch.is_lit else 'OFF'
         logger.info(f"Publishing state {state} to {MQTT_TOPIC}")
         self.mqttc.publish(MQTT_TOPIC, state, qos=0, retain=True)
 
@@ -109,7 +108,7 @@ def scheduled_turn_off():
     global last_call
     if last_call and (datetime.now() - last_call).seconds / 60 > AUTOMATIC_SHUTDOWN_DELAY:
         logger.info("No recent activity, turning off the device.")
-        GPIO.output(GPIO_ID, False)
+        switch.off()
         mqtt_controller.publish_state()
 
 @tl.job(interval=timedelta(seconds=20))
@@ -132,7 +131,7 @@ def signal_handler(sig, frame):
     logger.info("Gracefully shutting down...")
     tl.stop()
     mqtt_controller.stop()
-    GPIO.cleanup()
+    os._exit(0)
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
