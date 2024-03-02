@@ -19,11 +19,11 @@ def gpio_factory(factory):
         from gpiozero.pins.pigpio import PiGPIOFactory
         return PiGPIOFactory()
     elif factory == 'lgpio':
-        from gpiozero.pins.lgpio import LGPIOPinFactory
-        return LGPIOPinFactory()
+        from gpiozero.pins.lgpio import LGPIOFactory
+        return LGPIOFactory()
     elif factory == 'native':
-        from gpiozero.pins.native import NativePinFactory
-        return NativePinFactory()
+        from gpiozero.pins.native import NativeFactory
+        return NativeFactory()
     else:
         raise ValueError(f"Unknown GPIO factory: {factory}")
 
