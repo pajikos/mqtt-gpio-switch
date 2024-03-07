@@ -51,8 +51,6 @@ logger = logging.getLogger(__name__)
 # GPIO setup
 switch = LED(GPIO_ID, pin_factory=gpio_factory(GPIOZERO_PIN_FACTORY))
 
-# Timeloop for scheduled tasks
-tl = Timeloop()
 last_call = None
 
 class ScheduledTask:
