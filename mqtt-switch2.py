@@ -203,4 +203,3 @@ if __name__ == "__main__":
 
     mqtt_controller = MQTTController()
     mqtt_controller.start()
-    tl.start(block=True)
