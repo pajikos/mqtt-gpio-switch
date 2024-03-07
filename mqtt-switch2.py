@@ -39,7 +39,7 @@ MQTT_TOPIC_SUB = os.getenv('MQTT_TOPIC_SUB', "home/kotel/set")
 MQTT_TOPIC_AVAILABILITY = os.getenv('MQTT_TOPIC_AVAILABILITY', "home/kotel/availability")
 AUTOMATIC_SHUTDOWN_DELAY = int(os.getenv('AUTOMATIC_SHUTDOWN_DELAY', 15))
 GPIO_ID = int(os.getenv('GPIO_ID', 21))
-GPIOZERO_PIN_FACTORY = os.getenv('GPIOZERO_PIN_FACTORY', 'pigpio') # rpigpio, pigpio, lgpio, native
+GPIOZERO_PIN_FACTORY = os.getenv('GPIOZERO_PIN_FACTORY', 'rpigpio') # rpigpio, pigpio, lgpio, native
 
 # Setup logging
 logging.basicConfig(level=logging.INFO,
