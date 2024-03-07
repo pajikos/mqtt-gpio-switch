@@ -4,6 +4,7 @@ import logging
 import os
 import signal
 from datetime import datetime, timedelta
+import time
 
 from gpiozero import LED
 import paho.mqtt.client as mqtt
@@ -145,10 +146,28 @@ def run_flask_app():
 
 # Signal handler for graceful shutdown
 def signal_handler(sig, frame):
-    logger.info("Gracefully shutting down...")
-    tl.stop()
-    mqtt_controller.stop()
-    os._exit(0)
+    try:
+        logger.info("Gracefully shutting down the Timeloop...")
+        tl.stop()
+    except Exception as e:
+        logger.error(f"Error stopping Timeloop: {e}")
+    
+    try:
+        logger.info("Gracefully shutting down the MQTT controller...")
+        mqtt_controller.stop()
+    except Exception as e:
+        logger.error(f"Error stopping MQTT controller: {e}")
+
+    # Add a short delay to allow background processes to terminate
+    logger.info("Waiting for background processes to terminate...")
+    time.sleep(2)
+
+    # Now attempt to exit the script
+    try:
+        logger.info("Exiting script...")
+        os._exit(0)
+    except Exception as e:
+        logger.error(f"Error during exit: {e}")
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
