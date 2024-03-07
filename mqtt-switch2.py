@@ -8,7 +8,7 @@ import time
 
 from gpiozero import LED
 import paho.mqtt.client as mqtt
-from timeloop import Timeloop
+from threading import Thread, Timer, Event
 from flask import Flask, jsonify
 from threading import Thread
 
@@ -55,11 +55,38 @@ switch = LED(GPIO_ID, pin_factory=gpio_factory(GPIOZERO_PIN_FACTORY))
 tl = Timeloop()
 last_call = None
 
+class ScheduledTask:
+    def __init__(self, interval, function):
+        self.interval = interval
+        self.function = function
+        self.thread = None
+        self.stop_event = Event()
+
+    def start(self):
+        self.stop_event.clear()
+        self.schedule()
+
+    def schedule(self):
+        if not self.stop_event.is_set():
+            self.thread = Timer(self.interval.total_seconds(), self.run)
+            self.thread.start()
+
+    def run(self):
+        self.function()
+        self.schedule()  # Reschedule the next run
+
+    def stop(self):
+        self.stop_event.set()
+        if self.thread is not None:
+            self.thread.cancel()
+            self.thread.join()
+
 class MQTTController:
     def __init__(self):
         self.mqttc = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2)
         self.mqttc.enable_logger(logger)
         self.setup_callbacks()
+        self.reconnect_delay = 30
 
     def setup_callbacks(self):
         self.mqttc.on_message = self.on_message
@@ -70,9 +97,15 @@ class MQTTController:
     def connect(self):
         try:
             self.mqttc.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL)
+            self.mqttc.loop_start()
+            logger.info(f"Connected to MQTT broker at {MQTT_HOST}")
         except Exception as e:
-            logger.error("Could not connect to MQTT server: %s. Retrying in 60 seconds...", e)
-            tl.job(interval=timedelta(seconds=30))(self.connect)
+            logger.error(f"Could not connect to MQTT server: {e}. Retrying in {self.reconnect_delay} seconds...")
+            self.schedule_reconnect()
+    
+    def schedule_reconnect(self):
+        # Use threading.Timer to schedule a reconnect attempt
+        Timer(self.reconnect_delay, self.connect).start()
 
     def on_connect(self, client, userdata, flags, reason_code, properties):
         self.publish_availability('online')
@@ -120,17 +153,16 @@ class MQTTController:
         self.publish_availability('offline')
         self.mqttc.disconnect()
 
-# Scheduled job to turn off GPIO after delay
-@tl.job(interval=timedelta(seconds=60))
-def scheduled_turn_off():
+
+# Replace the timeloop jobs with instances of ScheduledTask
+def scheduled_turn_off_function():
     global last_call
     if last_call and (datetime.now() - last_call).seconds / 60 > AUTOMATIC_SHUTDOWN_DELAY:
         logger.info("No recent activity, turning off the device.")
         switch.off()
         mqtt_controller.publish_state()
 
-@tl.job(interval=timedelta(seconds=20))
-def send_availability_and_state():
+def send_availability_and_state_function():
     mqtt_controller.publish_availability('online')
     mqtt_controller.publish_state()
     
@@ -144,30 +176,19 @@ def health_check():
 def run_flask_app():
     app.run(host='0.0.0.0', port=5000)
 
-# Signal handler for graceful shutdown
-def signal_handler(sig, frame):
-    try:
-        logger.info("Gracefully shutting down the Timeloop...")
-        tl.stop()
-    except Exception as e:
-        logger.error(f"Error stopping Timeloop: {e}")
-    
-    try:
-        logger.info("Gracefully shutting down the MQTT controller...")
-        mqtt_controller.stop()
-    except Exception as e:
-        logger.error(f"Error stopping MQTT controller: {e}")
 
-    # Add a short delay to allow background processes to terminate
+# Modify the signal_handler function to handle the new ScheduledTask class
+def signal_handler(sig, frame):
+    logger.info("Gracefully shutting down...")
+    scheduled_turn_off.stop()
+    send_availability_and_state.stop()
+    mqtt_controller.stop()
+    
+    # Allow time for all threads to finish
     logger.info("Waiting for background processes to terminate...")
     time.sleep(2)
-
-    # Now attempt to exit the script
-    try:
-        logger.info("Exiting script...")
-        os._exit(0)
-    except Exception as e:
-        logger.error(f"Error during exit: {e}")
+    
+    os._exit(0)
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
@@ -175,6 +196,12 @@ if __name__ == "__main__":
     
     flask_thread = Thread(target=run_flask_app)
     flask_thread.start()
+
+    scheduled_turn_off = ScheduledTask(timedelta(seconds=60), scheduled_turn_off_function)
+    send_availability_and_state = ScheduledTask(timedelta(seconds=20), send_availability_and_state_function)
+
+    scheduled_turn_off.start()
+    send_availability_and_state.start()
 
     mqtt_controller = MQTTController()
     mqtt_controller.start()
