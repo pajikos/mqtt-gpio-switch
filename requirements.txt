@@ -1,0 +1,5 @@
+paho-mqtt
+RPi.GPIO
+gpiozero
+timeloop
+Flask
