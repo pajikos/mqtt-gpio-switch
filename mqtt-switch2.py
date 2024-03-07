@@ -96,7 +96,6 @@ class MQTTController:
         try:
             self.mqttc.connect(MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL)
             self.mqttc.loop_start()
-            logger.info(f"Connected to MQTT broker at {MQTT_HOST}")
         except Exception as e:
             logger.error(f"Could not connect to MQTT server: {e}. Retrying in {self.reconnect_delay} seconds...")
             self.schedule_reconnect()
