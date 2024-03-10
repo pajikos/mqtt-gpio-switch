@@ -1,0 +1,26 @@
+<!-- templates/switch_control.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Switch Control</title>
+</head>
+<body>
+    <h1>Switch Control</h1>
+    <p>Current State: <strong id="switchState">{{ state }}</strong></p>
+    <button onclick="changeState('ON')">Turn ON</button>
+    <button onclick="changeState('OFF')">Turn OFF</button>
+
+    <script>
+        function changeState(state) {
+            fetch('/switch/' + state, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('switchState').textContent = data.state;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

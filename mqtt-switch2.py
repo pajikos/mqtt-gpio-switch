@@ -10,6 +10,7 @@ from gpiozero import LED
 import paho.mqtt.client as mqtt
 from threading import Thread, Timer, Event
 from flask import Flask, jsonify
+from flask import render_template
 from threading import Thread
 
 def gpio_factory(factory):
@@ -169,6 +170,24 @@ def health_check():
         return jsonify({'status': 'healthy'}), 200
     else:
         return jsonify({'status': 'unhealthy'}), 503
+
+@app.route('/control', methods=['GET'])
+def control_page():
+    state = 'ON' if switch.is_lit else 'OFF'
+    return render_template('switch_control.html', state=state)
+
+@app.route('/switch/<state>', methods=['POST'])
+def change_switch(state):
+    if state == 'ON':
+        switch.on()
+    elif state == 'OFF':
+        switch.off()
+    else:
+        return jsonify({'error': 'Invalid state'}), 400
+    
+    new_state = 'ON' if switch.is_lit else 'OFF'
+    return jsonify({'state': new_state})
+
 
 def run_flask_app():
     app.run(host='0.0.0.0', port=5000)
