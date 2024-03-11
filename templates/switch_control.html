@@ -13,8 +13,8 @@
     <button onclick="changeState('OFF')">Turn OFF</button>
     <h1>Manual mode switch</h1>
     <p>Current State: <strong id="manualControl">{{ manual_control }}</strong></p>
-    <button onclick="changeState('ON')">Turn ON manual mode</button>
-    <button onclick="changeState('OFF')">Turn OFF manual mode</button>
+    <button onclick="changeMode('ON')">Turn ON manual mode</button>
+    <button onclick="changeMode('OFF')">Turn OFF manual mode</button>
 
     <script>
         function changeState(state) {
