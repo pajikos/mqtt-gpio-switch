@@ -119,13 +119,18 @@ class MQTTController:
         self.handle_message(payload)
 
     def handle_message(self, payload):
-        state = switch.value
-        if payload == 'ON' and state != 1:
-            switch.on()
-            logger.info("Turning on the device.")
-        elif payload == 'OFF' and state == 1:
-            switch.off()
-            logger.info("Turning off the device.")
+        global manual_control
+        if manual_control:
+            logger.info("Manual control is enabled, skipping message handling.")
+        else:
+            state = switch.value
+            if payload == 'ON' and state != 1:
+                switch.on()
+                logger.info("Turning on the device.")
+            elif payload == 'OFF' and state == 1:
+                switch.off()
+                logger.info("Turning off the device.")
+        
         self.publish_state()
 
     def on_subscribe(self, client, userdata, mid, reason_codes, properties):
@@ -155,7 +160,10 @@ class MQTTController:
 
 # Replace the timeloop jobs with instances of ScheduledTask
 def scheduled_turn_off_function():
-    global last_call
+    global last_call, manual_control
+    if manual_control:
+        logger.info("Manual control is enabled, skipping automatic shutdown.")
+        return
     if last_call and (datetime.now() - last_call).seconds / 60 > AUTOMATIC_SHUTDOWN_DELAY:
         logger.info("No recent activity, turning off the device.")
         switch.off()
