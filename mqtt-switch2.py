@@ -197,6 +197,7 @@ def change_switch(state):
         return jsonify({'error': 'Invalid state'}), 400
     
     new_state = 'ON' if switch.is_lit else 'OFF'
+    logger.info(f"Switch is now {new_state} via web interface.")
     return jsonify({'state': new_state})
 
 @app.route('/mode/<state>', methods=['POST'])
@@ -210,6 +211,7 @@ def change_mode(state):
         return jsonify({'error': 'Invalid state'}), 400
     
     manual_control_state = 'ON' if manual_control else 'OFF'
+    logger.info(f"Manual control is now {manual_control_state} via web interface.")
     return jsonify({'manual_control': manual_control_state})
 
 
