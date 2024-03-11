@@ -53,6 +53,7 @@ logger = logging.getLogger(__name__)
 switch = LED(GPIO_ID, pin_factory=gpio_factory(GPIOZERO_PIN_FACTORY))
 
 last_call = None
+manual_control = False
 
 class ScheduledTask:
     def __init__(self, interval, function):
@@ -174,7 +175,7 @@ def health_check():
 @app.route('/control', methods=['GET'])
 def control_page():
     state = 'ON' if switch.is_lit else 'OFF'
-    return render_template('switch_control.html', state=state)
+    return render_template('switch_control.html', state=state, manualControl=manual_control)
 
 @app.route('/switch/<state>', methods=['POST'])
 def change_switch(state):
@@ -187,6 +188,18 @@ def change_switch(state):
     
     new_state = 'ON' if switch.is_lit else 'OFF'
     return jsonify({'state': new_state})
+
+@app.route('/mode/<state>', methods=['POST'])
+def change_mode(state):
+    if state == 'ON':
+        manual_control = True
+    elif state == 'OFF':
+        manual_control = False
+    else:
+        return jsonify({'error': 'Invalid state'}), 400
+    
+    manual_control_state = 'ON' if manual_control else 'OFF'
+    return jsonify({'manual_control': manual_control_state})
 
 
 def run_flask_app():

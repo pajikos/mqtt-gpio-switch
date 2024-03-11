@@ -7,10 +7,14 @@
     <title>Switch Control</title>
 </head>
 <body>
-    <h1>Switch Control</h1>
+    <h1>Control switch directly</h1>
     <p>Current State: <strong id="switchState">{{ state }}</strong></p>
     <button onclick="changeState('ON')">Turn ON</button>
     <button onclick="changeState('OFF')">Turn OFF</button>
+    <h1>Manual mode switch</h1>
+    <p>Current State: <strong id="manualControl">{{ manual_control }}</strong></p>
+    <button onclick="changeState('ON')">Turn ON manual mode</button>
+    <button onclick="changeState('OFF')">Turn OFF manual mode</button>
 
     <script>
         function changeState(state) {
@@ -18,6 +22,14 @@
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('switchState').textContent = data.state;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        function changeMode(state) {
+            fetch('/mode/' + state, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('manualControl').textContent = data.manual_control;
                 })
                 .catch(error => console.error('Error:', error));
         }
