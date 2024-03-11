@@ -174,9 +174,10 @@ def health_check():
 
 @app.route('/control', methods=['GET'])
 def control_page():
+    global manual_control, last_call
     state = 'ON' if switch.is_lit else 'OFF'
     manual_control_state = 'ON' if manual_control else 'OFF'
-    return render_template('switch_control.html', state=state, manual_control=manual_control_state)
+    return render_template('switch_control.html', state=state, manual_control=manual_control_state, last_call=last_call)
 
 @app.route('/switch/<state>', methods=['POST'])
 def change_switch(state):
@@ -192,6 +193,7 @@ def change_switch(state):
 
 @app.route('/mode/<state>', methods=['POST'])
 def change_mode(state):
+    global manual_control
     if state == 'ON':
         manual_control = True
     elif state == 'OFF':

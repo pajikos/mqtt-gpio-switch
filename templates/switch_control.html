@@ -15,6 +15,7 @@
     <p>Current State: <strong id="manualControl">{{ manual_control }}</strong></p>
     <button onclick="changeMode('ON')">Turn ON manual mode</button>
     <button onclick="changeMode('OFF')">Turn OFF manual mode</button>
+    <p>Last Call from MQTT: <strong id="lastCall">{{ last_call }}</strong></p>
 
     <script>
         function changeState(state) {
