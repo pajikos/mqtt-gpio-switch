@@ -1,6 +1,3 @@
-Here's a README.md file for your GitHub project:
-
-```markdown
 # Raspberry Pi MQTT Relay Control
 
 This project implements a remote control system for a relay switch on a Raspberry Pi using MQTT protocol. It provides both MQTT-based control and a web interface for managing the relay switch.
@@ -85,6 +82,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is open source and available under the [MIT License](LICENSE).
-```
-
-This README provides an overview of your project, its features, installation instructions, configuration options, usage guide, and information on Docker deployment. You may want to customize it further based on your specific project details or add any additional sections you find relevant.
